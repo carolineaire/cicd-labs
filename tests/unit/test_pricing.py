@@ -11,6 +11,24 @@ from minishop.pricing import line_total, money, quote, apply_student15
 
 pytestmark = pytest.mark.unit
 
+@pytest.fixture
+def catalogue_simule(monkeypatch):
+    # Prix des produits utilisés pour les tests
+    produits = {
+        "produit20": Decimal("20.00"),
+        "produit10": Decimal("10.00"),
+        "produit5": Decimal("5.00"),
+    }
+
+    def faux_get_product(product_id):
+        return SimpleNamespace(
+            id=product_id,
+            price=produits[product_id]
+        )
+
+    monkeypatch.setattr(
+        pricing, "get_product", faux_get_product
+    )
 
 def test_money_arrondi_commercial():
     """0.125 s'arrondit à 0.13 (ROUND_HALF_UP), pas 0.12."""
@@ -89,3 +107,41 @@ def test_student15_non_cumulable():
     resultat = apply_student15(lignes)
 
     assert resultat == Decimal("62.00")
+
+# TEST 1 : réduction normale de 15 %
+@pytest.mark.unit
+def test_student15_remise_normale(catalogue_simule):
+    panier = [{"product_id": "produit20", "qty": 1}]
+
+    resultat = pricing.quote(panier, coupon="STUDENT15")
+
+    assert resultat.subtotal == Decimal("20.00")
+    assert resultat.discount == Decimal("3.00")
+    assert resultat.total == Decimal("21.90")
+
+
+# TEST 2 : coupon sans montant minimum
+@pytest.mark.unit
+def test_student15_sans_minimum(catalogue_simule):
+    panier = [{"product_id": "produit10", "qty": 1}]
+
+    resultat = pricing.quote(panier, coupon="STUDENT15")
+
+    assert resultat.discount == Decimal("1.50")
+    assert resultat.total == Decimal("13.40")
+
+
+# TEST 3 : non cumulable avec remise volume
+@pytest.mark.unit
+def test_student15_non_cumulable(catalogue_simule):
+    panier = [
+        {"product_id": "produit5", "qty": 10},
+        {"product_id": "produit20", "qty": 1},
+    ]
+
+    resultat = pricing.quote(panier, coupon="STUDENT15")
+
+    assert resultat.subtotal == Decimal("67.50")
+    assert resultat.discount == Decimal("3.00")
+    assert resultat.total == Decimal("64.50")
+
