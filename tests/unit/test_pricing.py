@@ -4,8 +4,8 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
-import minishop.pricing as pricing
 
+import minishop.pricing as pricing
 from minishop.pricing import line_total, money, quote
 
 pytestmark = pytest.mark.unit
