@@ -1,4 +1,3 @@
-
 """Tests unitaires des règles de prix MiniShop."""
 
 from decimal import Decimal
