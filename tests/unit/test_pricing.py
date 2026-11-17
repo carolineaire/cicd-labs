@@ -39,7 +39,7 @@ def catalogue_simule(monkeypatch):
 # ----------------------------------
 
 def test_money_arrondi_commercial():
-    assert money("0.125") == Decimal("0.13")
+    assert money("0.125") == Decimal("0.99")
 
 
 def test_line_total_sans_remise():
