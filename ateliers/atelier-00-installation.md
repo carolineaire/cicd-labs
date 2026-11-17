@@ -42,9 +42,9 @@ Avoir un poste prêt pour toute la semaine : dépôt forké, environnement Pytho
    (GitHub Models, l'accès gratuit des sessions précédentes, a été arrêté par GitHub le 30 juillet 2026.)
 
 ## Critères de réussite
-- [ ] La boutique s'affiche, `/docs` aussi
-- [ ] `pytest` passe
-- [ ] Les Actions sont activées sur le fork
+- [x] La boutique s'affiche, `/docs` aussi
+- [x] `pytest` passe
+- [x] Les Actions sont activées sur le fork
 
 ## Plan du dépôt
 ```
