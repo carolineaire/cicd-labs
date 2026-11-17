@@ -7,7 +7,7 @@ from decimal import Decimal
 
 import pytest
 
-from minishop.pricing import line_total, money, quote
+from minishop.pricing import line_total, money, quote, apply_student15
 
 pytestmark = pytest.mark.unit
 

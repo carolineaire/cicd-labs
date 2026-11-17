@@ -119,3 +119,13 @@ def quote(items: list[dict], coupon: str | None = None) -> Quote:
     q.shipping = shipping_cost(after, coupon, empty=not q.lines)
     q.total = money(after + q.shipping)
     return q
+
+
+def apply_student15(lignes):
+    total = Decimal("0.00")
+    for montant, remise_volume in lignes:
+        if not remise_volume:
+            montant *= Decimal("0.85")
+        total += montant
+    return total
+
