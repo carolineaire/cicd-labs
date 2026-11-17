@@ -139,3 +139,96 @@ def test_student15_non_cumulable(catalogue_simule):
     assert resultat.subtotal == Decimal("67.50")
     assert resultat.discount == Decimal("3.00")
     assert resultat.total == Decimal("64.50")
+
+
+# ----------------------------------
+# TESTS DES COUPONS
+# ----------------------------------
+
+@pytest.mark.parametrize(
+    "coupon, qty, expected_discount",
+    [
+        ("WELCOME10", 1, "0.00"),  # 10 € : seuil non atteint
+        ("WELCOME10", 2, "2.00"),  # 20 € : réduction de 10 %
+        ("FIXED5", 2, "0.00"),     # 20 € : seuil non atteint
+        ("FIXED5", 3, "5.00"),     # 30 € : réduction de 5 €
+        ("FREESHIP", 1, "0.00"),   # Livraison gratuite
+    ]
+)
+def test_coupons(
+    catalogue_simule, coupon, qty, expected_discount
+):
+    panier = [
+        {"product_id": "produit10", "qty": qty}
+    ]
+
+    resultat = quote(panier, coupon=coupon)
+
+    assert resultat.discount == Decimal(expected_discount)
+
+
+# ----------------------------------
+# TESTS DE LIVRAISON
+# ----------------------------------
+
+@pytest.mark.parametrize(
+    "coupon, qty, expected_shipping",
+    [
+        (None, 5, "0.00"),         # 50 € : livraison gratuite
+        ("WELCOME10", 5, "4.90"), # Après remise : 45 €
+        ("WELCOME10", 6, "0.00"), # Après remise : 54 €
+    ]
+)
+def test_livraison_apres_remise(
+    catalogue_simule, coupon, qty, expected_shipping
+):
+    panier = [
+        {"product_id": "produit10", "qty": qty}
+    ]
+
+    resultat = quote(panier, coupon=coupon)
+
+    assert resultat.shipping == Decimal(expected_shipping)
+
+
+# ----------------------------------
+# COUPON INCONNU
+# ----------------------------------
+
+def test_coupon_inconnu(catalogue_simule):
+    panier = [
+        {"product_id": "produit10", "qty": 1}
+    ]
+
+    with pytest.raises(ValueError):
+        quote(panier, coupon="FAUXCOUPON")
+
+
+# ----------------------------------
+# COUPON EN MINUSCULES
+# ----------------------------------
+
+def test_coupon_minuscule(catalogue_simule):
+    panier = [
+        {"product_id": "produit10", "qty": 2}
+    ]
+
+    resultat = quote(panier, coupon="welcome10")
+
+    assert resultat.discount == Decimal("2.00")
+    assert resultat.coupon == "WELCOME10"
+
+
+def test_quote_as_dict(catalogue_simule):
+    panier = [
+        {"product_id": "produit5", "qty": 1}
+    ]
+
+    resultat = quote(panier)
+    donnees = resultat.as_dict()
+
+    assert donnees["subtotal"] == "5.00"
+    assert donnees["shipping"] == "4.90"
+    assert donnees["total"] == "9.90"
+    assert donnees["lines"][0]["product_id"] == "produit5"
+    assert donnees["lines"][0]["qty"] == 1
