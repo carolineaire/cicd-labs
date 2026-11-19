@@ -29,9 +29,9 @@ python ai_tools/generate_tests.py specs/pricing.feature \
     --source minishop/pricing.py --out tests/generated/test_pricing_ai.py
 ```
 Lisez `ai_tools/prompts/generate_tests.md`. Puis, dans le fichier généré :
-- Combien de tests ? Combien de `test_limite_*` que la spec ne mentionnait pas ?
-- Des tests échouent-ils ? Pour chacun : **bug de l'appli** ou **hallucination** du modèle ?
-- Le modèle a-t-il inventé une fonction ou un paramètre inexistant ?
+- Combien de tests ? 30 //// Combien de `test_limite_*` que la spec ne mentionnait pas ? 18
+- Des tests échouent-ils ? Pour chacun : **bug de l'appli** ou **hallucination** du modèle ? non
+- Le modèle a-t-il inventé une fonction ou un paramètre inexistant ? non
 
 ### 4. Prompt engineering (30 min)
 Modifiez le prompt et comparez (gardez un tableau de résultats) :
