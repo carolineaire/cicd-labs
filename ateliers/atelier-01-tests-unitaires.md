@@ -16,7 +16,7 @@ arrondi). Le fichier `tests/unit/test_pricing.py` contient 3 tests d'exemple et 
 pytest -m unit -v
 pytest -m unit --cov --cov-report=term-missing
 ```
-Notez la couverture de départ de `pricing.py`. Quelles lignes ne sont jamais exécutées ?
+Notez la couverture de départ de `pricing.py`. Quelles lignes ne sont jamais exécutées ? minishop\pricing.py       73     23     24      6    58%   38, 60, 76, 78, 81, 87-96, 102-106, 113-115
 
 ### 2. Tests paramétrés (25 min)
 Complétez les TODO. Utilisez `@pytest.mark.parametrize` pour éviter le copier-coller :

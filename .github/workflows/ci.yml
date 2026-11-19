@@ -1,0 +1,157 @@
+
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+
+  # -----------------------------
+  # 1. QUALITÉ DU CODE
+  # -----------------------------
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer Ruff
+        run: pip install ruff
+
+      - name: Vérifier la qualité du code
+        run: ruff check . --output-format=github
+
+  # -----------------------------
+  # 2. TESTS SUR 3 VERSIONS PYTHON
+  # -----------------------------
+  unit-matrix:
+    name: unit (Python ${{ matrix.python-version }}
+      )
+    needs: lint
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Installer les dépendances
+        run: pip install -r requirements-dev.txt
+
+      - name: Lancer les tests et la couverture
+        run: |
+          mkdir -p reports
+          pytest -n auto -m "unit or api" \
+            --cov=minishop.pricing \
+            --cov-branch \
+            --cov-report=xml:reports/coverage.xml \
+            --cov-report=html:htmlcov \
+            --cov-fail-under=85 \
+            --junitxml=reports/junit.xml
+
+      - name: Résumé de la couverture
+        if: always()
+        run: |
+          echo "### Python ${{ matrix.python-version }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f .coverage ]; then
+            coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || echo "Rapport indisponible" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Pas de rapport de couverture" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Publier les rapports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapports-python-${{ matrix.python-version }}
+          path: |
+            reports/
+            htmlcov/
+          if-no-files-found: warn
+
+  # Vérification globale des 3 versions Python
+  unit:
+    name: unit
+    needs: unit-matrix
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Vérifier tous les tests
+        run: test "${{ needs.unit-matrix.result }}" = "success"
+
+  # -----------------------------
+  # 3. TESTS DANS UN CONTENEUR
+  # -----------------------------
+  container-test:
+    name: container-test
+    needs: lint
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12-slim
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer les dépendances
+        run: pip install -r requirements-dev.txt
+
+      - name: Lancer les tests
+        run: pytest -m "unit or api" -q
+
+  # -----------------------------
+  # 4. CONSTRUCTION DE L'IMAGE DOCKER
+  # -----------------------------
+  docker:
+    name: docker
+    needs: [unit, container-test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Construire l'image
+        run: docker build -t minishop:ci .
+
+      - name: Démarrer le conteneur
+        run: docker run -d --name minishop-ci -p 8000:8000 minishop:ci
+
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS http://localhost:8000/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs minishop-ci
+          exit 1
+
+      - name: Nettoyer le conteneur
+        if: always()
+        run: docker rm -f minishop-ci || true
