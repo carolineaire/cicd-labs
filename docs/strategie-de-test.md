@@ -29,3 +29,39 @@
 
 ## 5. Indicateurs suivis
 Taux de réussite sur main, durée de la suite, nombre de tests flaky, couverture, MTTR d'une régression.
+
+
+## 3. Règles pour les tests générés par IA
+
+### Relecture et validation
+- Tout test généré par IA doit être relu par un développeur.
+- Vérifier que le test correspond aux règles métier.
+- Vérifier que les fonctions utilisées existent réellement.
+- Contrôler les assertions et les résultats attendus.
+- Les tests doivent passer avant leur intégration.
+
+### Identification des tests
+- Les tests générés doivent porter le marqueur
+  `@pytest.mark.generated`.
+- Ils sont conservés dans `tests/generated/`.
+- Leur origine (modèle, prompt) doit être documentée.
+
+### Qualité des tests
+- Mesurer la couverture des tests générés.
+- Utiliser les tests de mutation pour vérifier leur efficacité.
+- Ne pas accepter un test uniquement parce qu'il passe.
+- Tout échec doit être analysé avant correction.
+
+### Sécurité et confidentialité
+- Ne jamais transmettre de clés API, mots de passe
+  ou données personnelles dans les prompts.
+- Ne pas envoyer de code confidentiel à un LLM externe
+  sans autorisation.
+
+### Responsabilité
+- Le développeur qui valide le test reste responsable
+  de son exactitude.
+- Un test généré incorrect doit être corrigé ou supprimé.
+- L'IA est une aide à la création, pas une validation
+  automatique du comportement métier.
+
